@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Play Error Playlist",
+            "type": "shell",
+            "command": "curl -X POST http://127.0.0.1:5000/vscode/error",
+            "problemMatcher": []
+        },
+        {
+            "label": "Play Success Playlist",
+            "type": "shell",
+            "command": "curl -X POST http://127.0.0.1:5000/vscode/success",
+            "problemMatcher": []
+        }
+    ]
+}

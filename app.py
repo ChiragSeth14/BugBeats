@@ -150,6 +150,47 @@ def play_track(track_id):
         return jsonify({"error": "No active Spotify device found. Please start Spotify on a device."}), 404
     else:
         return jsonify({"error": "Failed to play track", "details": response.json()}), response.status_code
+    
+@app.route('/vscode/error', methods=['POST'])
+def handle_error_event():
+    """Triggered when an error occurs in VS Code."""
+    playlist_id = "37i9dQZF1DXcBWIGoYBM5M"  # Replace with the ID for error-related playlists
+    access_token = tokens.get("access_token")
+
+    if not access_token:
+        return jsonify({"error": "No Spotify token available"}), 401
+
+    play_url = "https://api.spotify.com/v1/me/player/play"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    payload = {"context_uri": f"spotify:playlist:{playlist_id}"}
+
+    response = requests.put(play_url, headers=headers, json=payload)
+
+    if response.status_code == 204:
+        return jsonify({"message": f"Error playlist {playlist_id} is now playing!"})
+    else:
+        return jsonify({"error": "Failed to play error playlist", "details": response.json()}), 500
+
+@app.route('/vscode/success', methods=['POST'])
+def handle_success_event():
+    """Triggered when no errors are detected."""
+    playlist_id = "37i9dQZF1DXcBWIGoYBM5M"  # Replace with the ID for success-related playlists
+    access_token = tokens.get("access_token")
+
+    if not access_token:
+        return jsonify({"error": "No Spotify token available"}), 401
+
+    play_url = "https://api.spotify.com/v1/me/player/play"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    payload = {"context_uri": f"spotify:playlist:{playlist_id}"}
+
+    response = requests.put(play_url, headers=headers, json=payload)
+
+    if response.status_code == 204:
+        return jsonify({"message": f"Success playlist {playlist_id} is now playing!"})
+    else:
+        return jsonify({"error": "Failed to play success playlist", "details": response.json()}), 500
+
 
 
 if __name__ == '__main__':
