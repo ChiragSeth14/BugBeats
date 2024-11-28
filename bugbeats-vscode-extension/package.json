@@ -10,8 +10,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:python", 
-    "onStartupFinished" 
+    "onLanguage:python",
+    "onStartupFinished"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -34,3 +34,4 @@
     "@vscode/test-electron": "^2.4.1"
   }
 }
+ 

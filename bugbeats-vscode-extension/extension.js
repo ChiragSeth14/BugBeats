@@ -12,6 +12,16 @@ function activate(context) {
     console.log('BugBeats extension activated.');
     vscode.window.showInformationMessage('BugBeats extension activated.');
 
+    // Add a status bar button
+    const runButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    runButton.text = "$(play) Run and Check"; // Play icon with text
+    runButton.command = 'bugbeats-vscode-extension.runAndCheck';
+    runButton.tooltip = "Run the active Python file and check for errors";
+    runButton.show();
+
+    // Add the button to subscriptions
+    context.subscriptions.push(runButton);
+
     // Register the command for running the active file
     const runCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.runAndCheck', async () => {
         console.log('Run and check command triggered.');
@@ -41,32 +51,32 @@ function activate(context) {
         try {
             const result = child_process.execSync(`python "${filePath}"`, { encoding: 'utf-8' });
             console.log('Python Output:', result);
-            vscode.window.showInformationMessage('File ran successfully. Playing success playlist.');
+            vscode.window.showInformationMessage('File ran successfully. Playing success track.');
             await triggerPlaylist('success');
         } catch (error) {
             console.error('Python Error:', error.stderr || error.message);
-            vscode.window.showErrorMessage('Error detected in the file. Playing error playlist.');
+            vscode.window.showErrorMessage('Error detected in the file. Playing error track.');
             await triggerPlaylist('error');
         }
     });
 
-    // Add the command to the subscriptions
+    // Add the command to subscriptions
     context.subscriptions.push(runCommand);
 }
 
-// Function to trigger playlists via Flask API
+// Function to trigger playlists or tracks via Flask API
 async function triggerPlaylist(endpoint) {
     try {
         const url = `${FLASK_API_URL}${endpoint}`;
-        console.log(`Triggering playlist for endpoint: ${url}`);
+        console.log(`Triggering playlist or track for endpoint: ${url}`);
         const response = await axios.post(url);
         console.log('Flask API Response:', response.data);
-        vscode.window.showInformationMessage(response.data.message || 'Playlist triggered.');
+        vscode.window.showInformationMessage(response.data.message || 'Playlist or track triggered.');
     } catch (error) {
         if (axios.isAxiosError(error)) {
-            console.error(`Failed to trigger playlist: ${error.response?.status} - ${error.response?.statusText}`);
+            console.error(`Failed to trigger playlist or track: ${error.response?.status} - ${error.response?.statusText}`);
         } else {
-            console.error('Failed to trigger playlist:', error.message);
+            console.error('Failed to trigger playlist or track:', error.message);
         }
         vscode.window.showErrorMessage('Failed to connect to the Flask server.');
     }

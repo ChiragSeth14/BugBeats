@@ -154,7 +154,8 @@ def play_track(track_id):
 @app.route('/vscode/error', methods=['POST'])
 def handle_error_event():
     """Triggered when an error occurs in VS Code."""
-    playlist_id = "1VBCyCAA5mbmk9KweUr88r?si=e0343b0baf60498f"  # Replace with the ID for error-related playlists
+    track_uri = "spotify:track:0ee3MUsiFe6mETk4oBgPoG"  # Spotify URI for the specific track
+    start_position_ms = 10000  # Start time in milliseconds (10 seconds = 10000 ms)
     access_token = tokens.get("access_token")
 
     if not access_token:
@@ -162,19 +163,24 @@ def handle_error_event():
 
     play_url = "https://api.spotify.com/v1/me/player/play"
     headers = {"Authorization": f"Bearer {access_token}"}
-    payload = {"context_uri": f"spotify:playlist:{playlist_id}"}
+    payload = {
+        "uris": [track_uri],
+        "position_ms": start_position_ms  # Start track at 10 seconds
+    }
 
     response = requests.put(play_url, headers=headers, json=payload)
 
     if response.status_code == 204:
-        return jsonify({"message": f"Error playlist {playlist_id} is now playing!"})
+        return jsonify({"message": f"Track {track_uri} is now playing from 10 seconds!"})
     else:
-        return jsonify({"error": "Failed to play error playlist", "details": response.json()}), 500
+        return jsonify({"error": "Failed to play track", "details": response.json()}), 500
+
 
 @app.route('/vscode/success', methods=['POST'])
 def handle_success_event():
     """Triggered when no errors are detected."""
-    playlist_id = "0jrlHA5UmxRxJjoykf7qRY?si=1ad3e6e6bcc2432b"  # Replace with the ID for success-related playlists
+    track_uri = "spotify:track:0O3ow3j5y8q3ykRs2K2n1b"  # Spotify URI for the specific track
+    start_position_ms = 45000  # Start time in milliseconds (0:45 = 45000 ms)
     access_token = tokens.get("access_token")
 
     if not access_token:
@@ -182,14 +188,19 @@ def handle_success_event():
 
     play_url = "https://api.spotify.com/v1/me/player/play"
     headers = {"Authorization": f"Bearer {access_token}"}
-    payload = {"context_uri": f"spotify:playlist:{playlist_id}"}
+    payload = {
+        "uris": [track_uri],
+        "position_ms": start_position_ms  # Start track at 0:45
+    }
 
     response = requests.put(play_url, headers=headers, json=payload)
 
     if response.status_code == 204:
-        return jsonify({"message": f"Success playlist {playlist_id} is now playing!"})
+        return jsonify({"message": f"Track {track_uri} is now playing from 0:45!"})
     else:
-        return jsonify({"error": "Failed to play success playlist", "details": response.json()}), 500
+        return jsonify({"error": "Failed to play track", "details": response.json()}), 500
+
+
 
 
 
