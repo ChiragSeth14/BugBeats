@@ -154,7 +154,7 @@ def play_track(track_id):
 @app.route('/vscode/error', methods=['POST'])
 def handle_error_event():
     """Triggered when an error occurs in VS Code."""
-    playlist_id = "37i9dQZF1DXcBWIGoYBM5M"  # Replace with the ID for error-related playlists
+    playlist_id = "1VBCyCAA5mbmk9KweUr88r?si=e0343b0baf60498f"  # Replace with the ID for error-related playlists
     access_token = tokens.get("access_token")
 
     if not access_token:
@@ -174,7 +174,7 @@ def handle_error_event():
 @app.route('/vscode/success', methods=['POST'])
 def handle_success_event():
     """Triggered when no errors are detected."""
-    playlist_id = "37i9dQZF1DXcBWIGoYBM5M"  # Replace with the ID for success-related playlists
+    playlist_id = "0jrlHA5UmxRxJjoykf7qRY?si=1ad3e6e6bcc2432b"  # Replace with the ID for success-related playlists
     access_token = tokens.get("access_token")
 
     if not access_token:
