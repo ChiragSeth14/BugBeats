@@ -3,7 +3,7 @@ const axios = require('axios');
 const child_process = require('child_process'); // For running commands
 
 // Flask API URL
-const FLASK_API_URL = 'http://127.0.0.1:5000/vscode/';
+const FLASK_API_URL = 'https://bug-beats-5b49ab3807c5.herokuapp.com/';
 
 let outputChannel = null; // Declare a global output channel
 
@@ -56,7 +56,7 @@ function activate(context) {
             const result = executeFile(filePath, language);
             console.log('Execution Output:', result);
             displayMessage(`File executed successfully:\n${result}`, "success");
-            await triggerPlaylist('success');
+            await triggerPlaylist('vscode/success');
         } catch (error) {
             console.error('Execution Error:', error.message);
 
@@ -84,13 +84,13 @@ function activate(context) {
 // Function to check login status and refresh token
 async function checkLoginStatusAndRefreshTokenIfNeeded() {
     try {
-        const response = await axios.get(`${FLASK_API_URL}check_login_status`);
+        const response = await axios.get(`${FLASK_API_URL}vscode/check_login_status`);
         if (!response.data.logged_in) {
             console.log("User not logged in. Opening Spotify login page...");
             vscode.env.openExternal(vscode.Uri.parse(`${FLASK_API_URL}login`));
         } else {
             console.log("User is already logged in. Refreshing token...");
-            await axios.post(`${FLASK_API_URL}refresh_token`);
+            await axios.post(`${FLASK_API_URL}vscode/refresh_token`);
         }
     } catch (error) {
         console.error("Failed to check login status or refresh token:", error.message);
@@ -149,14 +149,12 @@ function displayMessage(message, type) {
 // Function to stop Spotify playback via Flask API
 async function stopPlayback() {
     try {
-        const url = `${FLASK_API_URL}stop`;
+        const url = `${FLASK_API_URL}vscode/stop`;
         console.log(`Sending stop playback request to: ${url}`);
         await axios.post(url);
         console.log('Playback stopped successfully.');
-        // No displayMessage call here, so the output channel content remains unchanged
     } catch (error) {
         console.error('Failed to stop playback:', error.message);
-        // Log the error in the console but don't update the output channel
     }
 }
 
@@ -175,7 +173,7 @@ async function triggerPlaylist(endpoint) {
 // Function to trigger error-specific track via Flask API
 async function triggerErrorTrack(errorCode) {
     try {
-        const url = `${FLASK_API_URL}error/${errorCode}`;
+        const url = `${FLASK_API_URL}vscode/error/${errorCode}`;
         console.log(`Triggering error track for code: ${errorCode}`);
         await axios.post(url);
     } catch (error) {
@@ -193,7 +191,6 @@ function getErrorCode(errorMessage) {
     if (errorMessage.includes('KeyError')) return 'key_error';
     return 'unknown_error';
 }
-
 
 // Deactivate the extension
 function deactivate() {
