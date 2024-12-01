@@ -1,7 +1,7 @@
 {
   "name": "bugbeats-vscode-extension",
   "displayName": "bugbeats-vscode-extension",
-  "description": "",
+  "description": "BugBeats Extension for running files and tracking playback",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.83.0"
@@ -10,15 +10,20 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:python",
-    "onStartupFinished"
+    "*"
   ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "bugbeats-vscode-extension.runAndCheck",
-      "title": "Run File and Check for Errors"
-    }]
+    "commands": [
+      {
+        "command": "bugbeats-vscode-extension.runAndCheck",
+        "title": "Run File and Check for Errors"
+      },
+      {
+        "command": "bugbeats-vscode-extension.stopPlayback",
+        "title": "Stop Playback"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
@@ -34,4 +39,3 @@
     "@vscode/test-electron": "^2.4.1"
   }
 }
- 

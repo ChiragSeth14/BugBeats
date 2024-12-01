@@ -1,156 +1,28 @@
-// const vscode = require('vscode');
-// const axios = require('axios');
-// const child_process = require('child_process'); // For running Python scripts
-
-// // Flask API URL
-// const FLASK_API_URL = 'http://127.0.0.1:5000/vscode/';
-
-// /**
-//  * @param {vscode.ExtensionContext} context
-//  */
-// function activate(context) {
-//     console.log('BugBeats extension activated.');
-//     vscode.window.showInformationMessage('BugBeats extension activated.');
-
-//     // Add a status bar button
-//     const runButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-//     runButton.text = "$(play) Run and Check"; // Play icon with text
-//     runButton.command = 'bugbeats-vscode-extension.runAndCheck';
-//     runButton.tooltip = "Run the active Python file and check for errors";
-//     runButton.show();
-
-//     // Add the button to subscriptions
-//     context.subscriptions.push(runButton);
-
-//     // Register the command for running the active file
-//     const runCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.runAndCheck', async () => {
-//         console.log('Run and check command triggered.');
-//         vscode.window.showInformationMessage('Running file and checking for errors.');
-
-//         // Get the active editor
-//         const editor = vscode.window.activeTextEditor;
-
-//         if (!editor) {
-//             vscode.window.showErrorMessage('No active editor detected.');
-//             return;
-//         }
-
-//         const filePath = editor.document.uri.fsPath;
-//         const language = editor.document.languageId;
-
-//         console.log(`Active file: ${filePath}`);
-//         console.log(`Language of the active file: ${language}`);
-
-//         // Ensure the file is a Python file
-//         if (language !== 'python') {
-//             vscode.window.showErrorMessage('The active file is not a Python file.');
-//             return;
-//         }
-
-//         // Run the file and capture output
-//         try {
-//             const result = child_process.execSync(`python "${filePath}"`, { encoding: 'utf-8' });
-//             console.log('Python Output:', result);
-//             vscode.window.showInformationMessage('File ran successfully. Playing success track.');
-//             await triggerPlaylist('success');
-//         } catch (error) {
-//             console.error('Python Error:', error.stderr || error.message);
-
-//             // Extract error message
-//             const errorMessage = error.stderr || error.message;
-//             console.log(`Error message: ${errorMessage}`);
-
-//             // Map error types to specific codes
-//             const errorCode = getErrorCode(errorMessage);
-//             console.log(`Mapped error code: ${errorCode}`);
-
-//             vscode.window.showErrorMessage(`Error detected: ${errorMessage}. Playing error-specific track.`);
-//             await triggerErrorTrack(errorCode);
-//         }
-//     });
-
-//     // Add the command to subscriptions
-//     context.subscriptions.push(runCommand);
-// }
-
-// // Function to trigger success playlist or error-specific track via Flask API
-// async function triggerPlaylist(endpoint) {
-//     try {
-//         const url = `${FLASK_API_URL}${endpoint}`;
-//         console.log(`Triggering playlist or track for endpoint: ${url}`);
-//         const response = await axios.post(url);
-//         console.log('Flask API Response:', response.data);
-//         vscode.window.showInformationMessage(response.data.message || 'Playlist or track triggered.');
-//     } catch (error) {
-//         if (axios.isAxiosError(error)) {
-//             console.error(`Failed to trigger playlist or track: ${error.response?.status} - ${error.response?.statusText}`);
-//         } else {
-//             console.error('Failed to trigger playlist or track:', error.message);
-//         }
-//         vscode.window.showErrorMessage('Failed to connect to the Flask server.');
-//     }
-// }
-
-// // Function to trigger error-specific track via Flask API
-// async function triggerErrorTrack(errorCode) {
-//     try {
-//         const url = `${FLASK_API_URL}error/${errorCode}`;
-//         console.log(`Triggering error track for code: ${errorCode}`);
-//         const response = await axios.post(url);
-//         console.log('Flask API Response:', response.data);
-//         vscode.window.showInformationMessage(response.data.message || 'Error-specific track triggered.');
-//     } catch (error) {
-//         if (axios.isAxiosError(error)) {
-//             console.error(`Failed to trigger error-specific track: ${error.response?.status} - ${error.response?.statusText}`);
-//         } else {
-//             console.error('Failed to trigger error-specific track:', error.message);
-//         }
-//         vscode.window.showErrorMessage('Failed to connect to the Flask server.');
-//     }
-// }
-
-// // Function to map error messages to error codes
-// function getErrorCode(errorMessage) {
-//     if (errorMessage.includes('SyntaxError')) return 'syntax_error';
-//     if (errorMessage.includes('NameError')) return 'name_error';
-//     if (errorMessage.includes('TypeError')) return 'type_error';
-//     if (errorMessage.includes('IndexError')) return 'index_error';
-//     if (errorMessage.includes('KeyError')) return 'key_error';
-//     return 'unknown_error';
-// }
-
-// // Deactivate the extension
-// function deactivate() {
-//     console.log('BugBeats extension deactivated.');
-// }
-
-// module.exports = {
-//     activate,
-//     deactivate
-// };
-
 const vscode = require('vscode');
 const axios = require('axios');
-const child_process = require('child_process'); // For running Python scripts
+const child_process = require('child_process'); // For running commands
 
 // Flask API URL
 const FLASK_API_URL = 'http://127.0.0.1:5000/vscode/';
+
+let outputChannel = null; // Declare a global output channel
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
     console.log('BugBeats extension activated.');
-    vscode.window.showInformationMessage('BugBeats extension activated.');
+
+    // Initialize the output channel
+    outputChannel = vscode.window.createOutputChannel("BugBeats");
 
     // Add a status bar button for "Run and Check"
     const runButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     runButton.text = "$(play) Run and Check"; // Play icon with text
     runButton.command = 'bugbeats-vscode-extension.runAndCheck';
-    runButton.tooltip = "Run the active Python file and check for errors";
+    runButton.tooltip = "Run the active file and check for errors";
     runButton.show();
 
-    // Add the button to subscriptions
     context.subscriptions.push(runButton);
 
     // Add a status bar button for "Stop"
@@ -160,15 +32,12 @@ function activate(context) {
     stopButton.tooltip = "Stop Spotify playback";
     stopButton.show();
 
-    // Add the button to subscriptions
     context.subscriptions.push(stopButton);
 
     // Register the command for running the active file
     const runCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.runAndCheck', async () => {
         console.log('Run and check command triggered.');
-        vscode.window.showInformationMessage('Running file and checking for errors.');
 
-        // Get the active editor
         const editor = vscode.window.activeTextEditor;
 
         if (!editor) {
@@ -180,32 +49,20 @@ function activate(context) {
         const language = editor.document.languageId;
 
         console.log(`Active file: ${filePath}`);
-        console.log(`Language of the active file: ${language}`);
+        console.log(`Language: ${language}`);
 
-        // Ensure the file is a Python file
-        if (language !== 'python') {
-            vscode.window.showErrorMessage('The active file is not a Python file.');
-            return;
-        }
-
-        // Run the file and capture output
         try {
-            const result = child_process.execSync(`python "${filePath}"`, { encoding: 'utf-8' });
-            console.log('Python Output:', result);
-            vscode.window.showInformationMessage('File ran successfully. Playing success track.');
+            // Execute the file based on its language
+            const result = executeFile(filePath, language);
+            console.log('Execution Output:', result);
+            displayMessage(`File executed successfully:\n${result}`, "success");
             await triggerPlaylist('success');
         } catch (error) {
-            console.error('Python Error:', error.stderr || error.message);
+            console.error('Execution Error:', error.message);
 
-            // Extract error message
-            const errorMessage = error.stderr || error.message;
-            console.log(`Error message: ${errorMessage}`);
-
-            // Map error types to specific codes
-            const errorCode = getErrorCode(errorMessage);
-            console.log(`Mapped error code: ${errorCode}`);
-
-            vscode.window.showErrorMessage(`Error detected: ${errorMessage}. Playing error-specific track.`);
+            const errorCode = getErrorCode(error.message);
+            console.log(`Error Code: ${errorCode}`);
+            displayMessage(`Error detected (${errorCode}):\n${error.message}`, "error");
             await triggerErrorTrack(errorCode);
         }
     });
@@ -215,11 +72,78 @@ function activate(context) {
     // Register the command for stopping playback
     const stopCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.stopPlayback', async () => {
         console.log('Stop playback command triggered.');
-        vscode.window.showInformationMessage('Stopping Spotify playback...');
         await stopPlayback();
     });
 
     context.subscriptions.push(stopCommand);
+
+    // Auto-login and auto-refresh tokens on startup
+    checkLoginStatusAndRefreshTokenIfNeeded();
+}
+
+// Function to check login status and refresh token
+async function checkLoginStatusAndRefreshTokenIfNeeded() {
+    try {
+        const response = await axios.get(`${FLASK_API_URL}check_login_status`);
+        if (!response.data.logged_in) {
+            console.log("User not logged in. Opening Spotify login page...");
+            vscode.env.openExternal(vscode.Uri.parse(`${FLASK_API_URL}login`));
+        } else {
+            console.log("User is already logged in. Refreshing token...");
+            await axios.post(`${FLASK_API_URL}refresh_token`);
+        }
+    } catch (error) {
+        console.error("Failed to check login status or refresh token:", error.message);
+    }
+}
+
+// Function to execute the file based on its language
+function executeFile(filePath, language) {
+    let command;
+
+    switch (language) {
+        case 'python':
+            command = `python "${filePath}"`;
+            break;
+        case 'javascript':
+        case 'typescript':
+            command = `node "${filePath}"`;
+            break;
+        case 'java':
+            command = `javac "${filePath}" && java "${filePath.replace('.java', '')}"`;
+            break;
+        case 'cpp':
+            command = `g++ "${filePath}" -o "${filePath.replace(/\.[^/.]+$/, '')}" && "${filePath.replace(/\.[^/.]+$/, '')}"`;
+            break;
+        case 'c':
+            command = `gcc "${filePath}" -o "${filePath.replace(/\.[^/.]+$/, '')}" && "${filePath.replace(/\.[^/.]+$/, '')}"`;
+            break;
+        case 'bash':
+            command = `bash "${filePath}"`;
+            break;
+        case 'ruby':
+            command = `ruby "${filePath}"`;
+            break;
+        case 'php':
+            command = `php "${filePath}"`;
+            break;
+        case 'go':
+            command = `go run "${filePath}"`;
+            break;
+        default:
+            throw new Error(`Unsupported language: ${language}`);
+    }
+
+    return child_process.execSync(command, { encoding: 'utf-8' });
+}
+
+// Function to display persistent messages
+function displayMessage(message, type) {
+    if (outputChannel) {
+        outputChannel.clear(); // Clear previous messages
+        outputChannel.appendLine(`[${type.toUpperCase()}]: ${message}`);
+        outputChannel.show(true); // Show the output channel
+    }
 }
 
 // Function to stop Spotify playback via Flask API
@@ -227,16 +151,12 @@ async function stopPlayback() {
     try {
         const url = `${FLASK_API_URL}stop`;
         console.log(`Sending stop playback request to: ${url}`);
-        const response = await axios.post(url);
-        console.log('Flask API Response:', response.data);
-        vscode.window.showInformationMessage(response.data.message || 'Playback stopped.');
+        await axios.post(url);
+        console.log('Playback stopped successfully.');
+        // No displayMessage call here, so the output channel content remains unchanged
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error(`Failed to stop playback: ${error.response?.status} - ${error.response?.statusText}`);
-        } else {
-            console.error('Failed to stop playback:', error.message);
-        }
-        vscode.window.showErrorMessage('Failed to stop Spotify playback.');
+        console.error('Failed to stop playback:', error.message);
+        // Log the error in the console but don't update the output channel
     }
 }
 
@@ -245,16 +165,10 @@ async function triggerPlaylist(endpoint) {
     try {
         const url = `${FLASK_API_URL}${endpoint}`;
         console.log(`Triggering playlist or track for endpoint: ${url}`);
-        const response = await axios.post(url);
-        console.log('Flask API Response:', response.data);
-        vscode.window.showInformationMessage(response.data.message || 'Playlist or track triggered.');
+        await axios.post(url);
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error(`Failed to trigger playlist or track: ${error.response?.status} - ${error.response?.statusText}`);
-        } else {
-            console.error('Failed to trigger playlist or track:', error.message);
-        }
-        vscode.window.showErrorMessage('Failed to connect to the Flask server.');
+        console.error('Failed to trigger playlist or track:', error.message);
+        displayMessage("Please make sure your Spotify device is active.", "error");
     }
 }
 
@@ -263,16 +177,10 @@ async function triggerErrorTrack(errorCode) {
     try {
         const url = `${FLASK_API_URL}error/${errorCode}`;
         console.log(`Triggering error track for code: ${errorCode}`);
-        const response = await axios.post(url);
-        console.log('Flask API Response:', response.data);
-        vscode.window.showInformationMessage(response.data.message || 'Error-specific track triggered.');
+        await axios.post(url);
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error(`Failed to trigger error-specific track: ${error.response?.status} - ${error.response?.statusText}`);
-        } else {
-            console.error('Failed to trigger error-specific track:', error.message);
-        }
-        vscode.window.showErrorMessage('Failed to connect to the Flask server.');
+        console.error('Failed to trigger error-specific track:', error.message);
+        displayMessage("Please make sure your Spotify device is active.", "error");
     }
 }
 
@@ -286,8 +194,12 @@ function getErrorCode(errorMessage) {
     return 'unknown_error';
 }
 
+
 // Deactivate the extension
 function deactivate() {
+    if (outputChannel) {
+        outputChannel.dispose(); // Clean up the output channel
+    }
     console.log('BugBeats extension deactivated.');
 }
 
@@ -295,5 +207,3 @@ module.exports = {
     activate,
     deactivate
 };
-
-
