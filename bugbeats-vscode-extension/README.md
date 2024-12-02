@@ -4,17 +4,17 @@ BugBeats is a fun and creative Visual Studio Code (VS Code) extension designed t
 
 ## Features
 
-- Run and Check Code: Execute your code in the active editor and analyze the results.
-- Play Bug Tunes: When an error occurs, BugBeats detects the error type and plays a corresponding Spotify track.
-- Celebrate Success: When your code runs successfully, enjoy a celebratory tune.
-- Error-Specific Tracks: Different error types (e.g., SyntaxError, IndexError, TypeError) are mapped to unique Spotify tracks.
-- Stop Playback: Quickly stop the music with a single click.
-- Auto Spotify Integration: Seamlessly connect with Spotify to start playback directly.
+- **Run and Check Code:** Execute your code in the active editor and analyze the results.
+- **Play Bug Tunes:** When an error occurs, BugBeats detects the error type and plays a corresponding Spotify track.
+- **Celebrate Success:** When your code runs successfully, enjoy a celebratory tune.
+- **Error-Specific Tracks:** Different error types (e.g., SyntaxError, IndexError, TypeError) are mapped to unique Spotify tracks.
+- **Stop Playback:** Quickly stop the music with a single click.
+- **Auto Spotify Integration:** Seamlessly connect with Spotify to start playback directly.
 
 ## Requirements
 
-- Spotify Premium Account: Required for playback control via Spotify API.
-- VS Code: Latest version recommended.
+- **Spotify Premium Account:** Required for playback control via Spotify API.
+- **VS Code:** Latest version recommended.
 
 ## How To Use It
 
