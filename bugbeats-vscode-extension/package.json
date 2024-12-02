@@ -1,7 +1,8 @@
 {
   "name": "bugbeats-vscode-extension",
-  "displayName": "bugbeats-vscode-extension",
-  "description": "BugBeats Extension for running files and tracking playback",
+  "displayName": "BugBeats",
+  "publisher": "Chirag14",
+  "description": "Debugging with Beats! Turn coding struggles into a jam session as Spotify reacts to your code's success or failure. Who knew bugs could sound this good?",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.83.0"
