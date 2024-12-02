@@ -1,65 +1,36 @@
-# bugbeats-vscode-extension README
+# BugBeats
 
-This is the README for your extension "bugbeats-vscode-extension". After writing up a brief description, we recommend including the following sections.
+BugBeats is a fun and creative Visual Studio Code (VS Code) extension designed to lighten the mood during coding sessions. It plays Spotify tracks based on the outcome of your code execution—celebrate your successes and laugh off your bugs with some beats! Whether you're smashing through error-free runs or dealing with frustrating bugs, BugBeats will add some rhythm to your debugging journey.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- Run and Check Code: Execute your code in the active editor and analyze the results.
+- Play Bug Tunes: When an error occurs, BugBeats detects the error type and plays a corresponding Spotify track.
+- Celebrate Success: When your code runs successfully, enjoy a celebratory tune.
+- Error-Specific Tracks: Different error types (e.g., SyntaxError, IndexError, TypeError) are mapped to unique Spotify tracks.
+- Stop Playback: Quickly stop the music with a single click.
+- Auto Spotify Integration: Seamlessly connect with Spotify to start playback directly.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Spotify Premium Account: Required for playback control via Spotify API.
+- VS Code: Latest version recommended.
 
-## Extension Settings
+## How To Use It
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- Download the extension from the marketplace and once it is enabled, it will automatically take you to the login page to connect with your Spotify.
+- Once connected, you are ready to go! **Just make sure your Spotify device is active**, you can do that by going to your Spotify app (web or mobile) and just press play on any song (you can pause it instantly after pressing play) so that the extension can recognize your active device.
+- Start coding in whatever language you want and click the **Run and Check** button at the bottom left of your screen when you wanna run and test your code.
+- BugBeats will detect your code for errors, and will play a specific song based on whether your code ran successfully or not.
+- Although, the songs do have a set time limit and automatically stop after a few seconds, you can also manually stop them by clicking the **Stop Playback** button which is to the right of the Run and Check button.
 
-For example:
+## Help
 
-This extension contributes the following settings:
+If you have any questions or concerns regarding the extension, be sure to check out the demo video I posted on my [LinkedIn](https://www.linkedin.com/in/chirag-seth-b09538229/). Also feel free to connect with me and ask me if you are facing any issues, and I will happily resolve them for you.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Here's our [GitHub](https://github.com/ChiragSeth14/BugBeats) if you wanna look at our source code!
 
-## Known Issues
+## Contributors
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
+Made by Chirag Seth and Yajat Mehta, students at Arizona State University.
 **Enjoy!**
