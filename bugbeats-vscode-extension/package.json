@@ -31,6 +31,10 @@
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChiragSeth14/BugBeats"
+  },
   "devDependencies": {
     "@types/vscode": "^1.83.0",
     "@types/mocha": "^10.0.9",
