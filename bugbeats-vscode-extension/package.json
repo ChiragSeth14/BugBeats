@@ -3,7 +3,7 @@
   "displayName": "BugBeats",
   "publisher": "Chirag14",
   "description": "Debugging with Beats! Turn coding struggles into a jam session as Spotify reacts to your code's success or failure. Who knew bugs could sound this good?",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.83.0"
   },
