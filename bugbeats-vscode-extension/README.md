@@ -28,6 +28,8 @@ BugBeats is a fun and creative Visual Studio Code (VS Code) extension designed t
 
 If the extension stops working or is facing any issues, try reloading the VSCode window and running it again. You can do that by pressing **Ctrl+Shift+P (Windows/Linux)** or **Cmd+Shift+P (Mac)** to open the command palette, then type and select **Developer: Reload Window**. It should work after that.
 
+If the issue still isn't resolved, make sure your Spotify device is active. Go over to your Spotify app and press play on any song (you can pause it instantly after pressing play) so that the extension can recognize your active device.
+
 If you have any questions or concerns regarding the extension, be sure to check out the demo video I posted on my [LinkedIn](https://www.linkedin.com/in/chirag-seth-b09538229/). Also feel free to connect with me and ask me if you are facing any issues, and I will happily resolve them for you.
 
 Here's our [GitHub](https://github.com/ChiragSeth14/BugBeats) if you wanna look at our source code!
