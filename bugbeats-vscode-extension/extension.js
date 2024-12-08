@@ -208,13 +208,13 @@
 
 const vscode = require('vscode');
 const axios = require('axios');
-const child_process = require('child_process'); // For running commands
 
 // Flask API URL
-const FLASK_API_URL = 'http://127.0.0.1:5000/'; // Replace with your local Flask API URL or deployed URL
+//const FLASK_API_URL = 'http://127.0.0.1:5000/';
+const FLASK_API_URL = 'https://bug-beats-5b49ab3807c5.herokuapp.com/';
 
-let outputChannel = null; // Declare a global output channel
 let userId = null; // Store the logged-in Spotify user ID
+let outputChannel = null; // Output channel for messages and debugging
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -225,97 +225,108 @@ function activate(context) {
     // Initialize the output channel
     outputChannel = vscode.window.createOutputChannel("BugBeats");
 
-    // Add a status bar button for "Run and Check"
+    // Add a "Run and Check" button to the status bar
     const runButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    runButton.text = "$(play) Run and Check"; // Play icon with text
+    runButton.text = "$(play) Run and Check";
     runButton.command = 'bugbeats-vscode-extension.runAndCheck';
     runButton.tooltip = "Run the active file and check for errors";
     runButton.show();
 
     context.subscriptions.push(runButton);
 
-    // Add a status bar button for "Stop"
+    // Add a "Stop" button to the status bar
     const stopButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
-    stopButton.text = "$(primitive-square) Stop Playback"; // Stop icon with text
+    stopButton.text = "$(primitive-square) Stop Playback";
     stopButton.command = 'bugbeats-vscode-extension.stopPlayback';
     stopButton.tooltip = "Stop Spotify playback";
     stopButton.show();
 
     context.subscriptions.push(stopButton);
 
-    // Register the command for running the active file
+    // Register the "Run and Check" command
     const runCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.runAndCheck', async () => {
-        console.log('Run and check command triggered.');
+        console.log('Run and Check triggered.');
+
+        if (!userId) {
+            vscode.window.showErrorMessage("Please log in to Spotify first.");
+            return;
+        }
 
         const editor = vscode.window.activeTextEditor;
-
         if (!editor) {
-            vscode.window.showErrorMessage('No active editor detected.');
+            vscode.window.showErrorMessage("No active editor detected.");
             return;
         }
 
         const filePath = editor.document.uri.fsPath;
         const language = editor.document.languageId;
 
-        console.log(`Active file: ${filePath}`);
-        console.log(`Language: ${language}`);
+        console.log(`Executing file: ${filePath}, Language: ${language}`);
 
         try {
-            // Execute the file based on its language
+            // Execute the file locally
             const result = executeFile(filePath, language);
-            console.log('Execution Output:', result);
+            console.log('Execution Result:', result);
             displayMessage(`File executed successfully:\n${result}`, "success");
-            await triggerPlaylist('vscode/success');
+
+            // Trigger the success track via Flask API
+            await triggerPlaylist('vscode/success', userId);
         } catch (error) {
             console.error('Execution Error:', error.message);
 
             const errorCode = getErrorCode(error.message);
-            console.log(`Error Code: ${errorCode}`);
+            console.log(`Detected Error Code: ${errorCode}`);
             displayMessage(`Error detected (${errorCode}):\n${error.message}`, "error");
-            await triggerErrorTrack(errorCode);
+
+            // Trigger an error-specific track via Flask API
+            await triggerErrorTrack(errorCode, userId);
         }
     });
 
     context.subscriptions.push(runCommand);
 
-    // Register the command for stopping playback
+    // Register the "Stop Playback" command
     const stopCommand = vscode.commands.registerCommand('bugbeats-vscode-extension.stopPlayback', async () => {
-        console.log('Stop playback command triggered.');
-        await stopPlayback();
+        console.log('Stop Playback triggered.');
+
+        if (!userId) {
+            vscode.window.showErrorMessage("Please log in to Spotify first.");
+            return;
+        }
+
+        try {
+            await stopPlayback(userId);
+        } catch (error) {
+            console.error('Failed to stop playback:', error.message);
+        }
     });
 
     context.subscriptions.push(stopCommand);
 
-    // Auto-login and auto-refresh tokens on startup
-    checkLoginStatusAndRefreshTokenIfNeeded();
+    // Check login status on activation
+    checkLoginStatus();
 }
 
-// Function to check login status and refresh token
-async function checkLoginStatusAndRefreshTokenIfNeeded() {
+// Function to check login status and retrieve user ID
+async function checkLoginStatus() {
     try {
         const response = await axios.get(`${FLASK_API_URL}vscode/check_login_status`);
-        if (!response.data.logged_in) {
+        if (response.data.logged_in && response.data.user_id) {
+            console.log("User already logged in:", response.data.user_id);
+            userId = response.data.user_id; // Save the logged-in user ID
+        } else {
             console.log("User not logged in. Opening Spotify login page...");
             vscode.env.openExternal(vscode.Uri.parse(`${FLASK_API_URL}login`));
-        } else {
-            console.log("User is already logged in. Refreshing token...");
-            const refreshResponse = await axios.post(`${FLASK_API_URL}vscode/refresh_token`, { user_id: userId });
-            console.log("Refresh response:", refreshResponse.data);
-
-            // Fetch user ID from login if not already set
-            if (!userId) {
-                const userIdResponse = await axios.post(`${FLASK_API_URL}callback`, { user_id: userId });
-                userId = userIdResponse.data.user_id;
-                console.log("Logged-in user ID:", userId);
-            }
         }
     } catch (error) {
-        console.error("Failed to check login status or refresh token:", error.message);
+        console.error("Failed to check login status:", error.message);
+        vscode.window.showErrorMessage("Failed to check login status. Ensure the Flask server is running.");
     }
 }
 
-// Function to execute the file based on its language
+// Function to execute the active file based on its language
 function executeFile(filePath, language) {
+    const child_process = require('child_process');
     let command;
 
     switch (language) {
@@ -338,15 +349,6 @@ function executeFile(filePath, language) {
         case 'bash':
             command = `bash "${filePath}"`;
             break;
-        case 'ruby':
-            command = `ruby "${filePath}"`;
-            break;
-        case 'php':
-            command = `php "${filePath}"`;
-            break;
-        case 'go':
-            command = `go run "${filePath}"`;
-            break;
         default:
             throw new Error(`Unsupported language: ${language}`);
     }
@@ -354,48 +356,37 @@ function executeFile(filePath, language) {
     return child_process.execSync(command, { encoding: 'utf-8' });
 }
 
-// Function to display persistent messages
-function displayMessage(message, type) {
-    if (outputChannel) {
-        outputChannel.clear(); // Clear previous messages
-        outputChannel.appendLine(`[${type.toUpperCase()}]: ${message}`);
-        outputChannel.show(true); // Show the output channel
+// Function to trigger a success playlist or error-specific track
+async function triggerPlaylist(endpoint, userId) {
+    try {
+        const url = `${FLASK_API_URL}${endpoint}`;
+        const response = await axios.post(url, { user_id: userId });
+        console.log('Playlist Triggered:', response.data);
+    } catch (error) {
+        console.error('Failed to trigger playlist:', error.message);
     }
 }
 
-// Function to stop Spotify playback via Flask API
-async function stopPlayback() {
+// Function to trigger error-specific track
+async function triggerErrorTrack(errorCode, userId) {
+    try {
+        const url = `${FLASK_API_URL}vscode/error/${errorCode}`;
+        const response = await axios.post(url, { user_id: userId });
+        console.log('Error Track Triggered:', response.data);
+    } catch (error) {
+        console.error('Failed to trigger error track:', error.message);
+    }
+}
+
+// Function to stop Spotify playback
+async function stopPlayback(userId) {
     try {
         const url = `${FLASK_API_URL}vscode/stop`;
-        console.log(`Sending stop playback request to: ${url}`);
         await axios.post(url, { user_id: userId });
         console.log('Playback stopped successfully.');
     } catch (error) {
         console.error('Failed to stop playback:', error.message);
-    }
-}
-
-// Function to trigger success playlist or error-specific track via Flask API
-async function triggerPlaylist(endpoint) {
-    try {
-        const url = `${FLASK_API_URL}${endpoint}`;
-        console.log(`Triggering playlist or track for endpoint: ${url}`);
-        await axios.post(url, { user_id: userId });
-    } catch (error) {
-        console.error('Failed to trigger playlist or track:', error.message);
-        displayMessage("Please make sure your Spotify device is active.", "error");
-    }
-}
-
-// Function to trigger error-specific track via Flask API
-async function triggerErrorTrack(errorCode) {
-    try {
-        const url = `${FLASK_API_URL}vscode/error/${errorCode}`;
-        console.log(`Triggering error track for code: ${errorCode}`);
-        await axios.post(url, { user_id: userId });
-    } catch (error) {
-        console.error('Failed to trigger error-specific track:', error.message);
-        displayMessage("Please make sure your Spotify device is active.", "error");
+        throw error;
     }
 }
 
@@ -409,16 +400,18 @@ function getErrorCode(errorMessage) {
     return 'unknown_error';
 }
 
-// Deactivate the extension
-function deactivate() {
+// Function to display messages in the output channel
+function displayMessage(message, type) {
     if (outputChannel) {
-        outputChannel.dispose(); // Clean up the output channel
+        outputChannel.clear();
+        outputChannel.appendLine(`[${type.toUpperCase()}]: ${message}`);
+        outputChannel.show(true);
     }
-    console.log('BugBeats extension deactivated.');
 }
 
 module.exports = {
     activate,
-    deactivate
+    deactivate: () => {
+        if (outputChannel) outputChannel.dispose();
+    }
 };
-

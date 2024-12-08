@@ -293,12 +293,14 @@ import os
 import requests
 from dotenv import load_dotenv
 from threading import Timer, Lock
+from flask_cors import CORS
 import json
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = 'your_secret_key'  # Required for session handling
 
 # Spotify API credentials
@@ -440,7 +442,8 @@ def manual_refresh_token():
 @app.route('/vscode/check_login_status', methods=['GET'])
 def check_login_status():
     if tokens:
-        return jsonify({"logged_in": True})
+        for user_id in tokens.keys():
+            return jsonify({"logged_in": True, "user_id": user_id})
     return jsonify({"logged_in": False})
 
 
