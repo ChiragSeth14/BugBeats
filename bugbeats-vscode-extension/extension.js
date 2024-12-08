@@ -210,7 +210,6 @@ const vscode = require('vscode');
 const axios = require('axios');
 
 // Flask API URL
-//const FLASK_API_URL = 'http://127.0.0.1:5000/';
 const FLASK_API_URL = 'https://bug-beats-5b49ab3807c5.herokuapp.com/';
 
 let userId = null; // Store the logged-in Spotify user ID

@@ -301,7 +301,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-app.secret_key = 'your_secret_key'  # Required for session handling
+app.secret_key = 'your_secret_key'
 
 # Spotify API credentials
 CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -310,10 +310,9 @@ REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
 
 # Token storage and timers
 tokens = {}
-active_timer = None  # Store the active timer
-active_track_uri = None  # Store the currently playing track URI
-lock = Lock()  # To ensure thread safety when updating playback context
-TOKEN_FILE = "spotify_tokens.json"  # File to persist tokens
+active_timer = None
+lock = Lock()
+TOKEN_FILE = "spotify_tokens.json"
 
 
 # Load tokens from file
@@ -409,20 +408,27 @@ def callback():
             headers={"Authorization": f"Bearer {access_token}"}
         ).json()
 
-        user_id = user_info.get('id')  # Unique Spotify user ID
+        user_id = user_info.get('id')
 
         if user_id:
-            # Store tokens by user ID
             tokens[user_id] = {
                 "access_token": access_token,
                 "refresh_token": refresh_token
             }
-            save_tokens()  # Save tokens to file
+            save_tokens()
             return jsonify({"message": "Logged in successfully!", "user_id": user_id})
         else:
             return jsonify({"error": "Failed to fetch user info from Spotify."})
     else:
         return jsonify({"error": "Failed to get token", "details": response.json()})
+
+
+@app.route('/vscode/check_login_status', methods=['GET'])
+def check_login_status():
+    if tokens:
+        for user_id in tokens.keys():
+            return jsonify({"logged_in": True, "user_id": user_id})
+    return jsonify({"logged_in": False})
 
 
 @app.route('/vscode/refresh_token', methods=['POST'])
@@ -437,14 +443,6 @@ def manual_refresh_token():
         return jsonify({"message": "Access token refreshed successfully!"})
     else:
         return jsonify({"error": "Failed to refresh access token"}), 500
-
-
-@app.route('/vscode/check_login_status', methods=['GET'])
-def check_login_status():
-    if tokens:
-        for user_id in tokens.keys():
-            return jsonify({"logged_in": True, "user_id": user_id})
-    return jsonify({"logged_in": False})
 
 
 @app.route('/vscode/success', methods=['POST'])
@@ -464,29 +462,42 @@ def handle_success_event():
         if not access_token:
             return jsonify({"error": "No valid access token available"}), 401
 
-    track_uri = "spotify:track:0O3ow3j5y8q3ykRs2K2n1b"
-    start_position_ms = 45000
-    stop_time_ms = 15000
-
-    play_url = "https://api.spotify.com/v1/me/player/play"
+    # Fetch active devices
+    devices_url = "https://api.spotify.com/v1/me/player/devices"
     headers = {"Authorization": f"Bearer {access_token}"}
-    payload = {"uris": [track_uri], "position_ms": start_position_ms}
+    devices_response = requests.get(devices_url, headers=headers)
 
+    if devices_response.status_code != 200:
+        return jsonify({"error": "Failed to fetch devices", "details": devices_response.json()}), 500
+
+    devices = devices_response.json().get("devices", [])
+    if not devices:
+        return jsonify({"error": "No active devices found for the user"}), 404
+
+    # Use the first available device
+    target_device_id = devices[0]["id"]
+
+    # Play the track
+    play_url = "https://api.spotify.com/v1/me/player/play"
+    payload = {
+        "uris": ["spotify:track:0O3ow3j5y8q3ykRs2K2n1b"],
+        "device_id": target_device_id,
+        "position_ms": 45000
+    }
     response = requests.put(play_url, headers=headers, json=payload)
 
     if response.status_code == 204:
-        global active_timer, active_track_uri
+        global active_timer
         with lock:
             if active_timer:
                 active_timer.cancel()
-            active_track_uri = track_uri
 
         def stop_playback():
             stop_url = "https://api.spotify.com/v1/me/player/pause"
-            requests.put(stop_url, headers=headers)
+            requests.put(stop_url, headers=headers, params={"device_id": target_device_id})
 
         with lock:
-            active_timer = Timer(stop_time_ms / 1000, stop_playback)
+            active_timer = Timer(15, stop_playback)
             active_timer.start()
 
         return jsonify({"message": f"Success track playing for user {user_id}"})
@@ -525,22 +536,36 @@ def handle_error_event(error_code):
     start_position_ms = track_data["start_position_ms"]
     stop_time_ms = track_data["stop_time_ms"]
 
-    play_url = "https://api.spotify.com/v1/me/player/play"
+    devices_url = "https://api.spotify.com/v1/me/player/devices"
     headers = {"Authorization": f"Bearer {access_token}"}
-    payload = {"uris": [track_uri], "position_ms": start_position_ms}
+    devices_response = requests.get(devices_url, headers=headers)
 
+    if devices_response.status_code != 200:
+        return jsonify({"error": "Failed to fetch devices", "details": devices_response.json()}), 500
+
+    devices = devices_response.json().get("devices", [])
+    if not devices:
+        return jsonify({"error": "No active devices found for the user"}), 404
+
+    target_device_id = devices[0]["id"]
+
+    play_url = "https://api.spotify.com/v1/me/player/play"
+    payload = {
+        "uris": [track_uri],
+        "device_id": target_device_id,
+        "position_ms": start_position_ms
+    }
     response = requests.put(play_url, headers=headers, json=payload)
 
     if response.status_code == 204:
-        global active_timer, active_track_uri
+        global active_timer
         with lock:
             if active_timer:
                 active_timer.cancel()
-            active_track_uri = track_uri
 
         def stop_playback():
             stop_url = "https://api.spotify.com/v1/me/player/pause"
-            requests.put(stop_url, headers=headers)
+            requests.put(stop_url, headers=headers, params={"device_id": target_device_id})
 
         with lock:
             active_timer = Timer(stop_time_ms / 1000, stop_playback)
@@ -579,4 +604,5 @@ def stop_playback():
 
 
 if __name__ == '__main__':
+    load_tokens()
     app.run(debug=True)
